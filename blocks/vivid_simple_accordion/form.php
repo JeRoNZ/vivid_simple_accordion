@@ -73,8 +73,13 @@ $addSelected = true;
             <div class="form-group">
                 <label class="col-xs-3 control-label" for="description<%=sort%>"><?php echo t('Description:')?></label>
                 <div class="col-xs-9">
+					<?php if (version_compare(\Config::get('concrete.version'), '8.0', '>=')) { ?>
+						<div class="editor-edit-content"></div>
+						<textarea id="ccm-slide-editor-<%= _.uniqueId() %>" style="display: none" class="editor-content editor-content-<?php echo $bID; ?>"
+								  name="description[]" id="description<%=sort%>"><%=description%></textarea>
+					<?php } else { ?>
                     <textarea class="redactor-content" name="description[]" id="description<%=sort%>"><%=description%></textarea>
-                </div>
+					<?php } ?>
             </div>
             <div class="form-group">
                 <label class="col-xs-3 control-label"><?php echo t('State')?></label>
@@ -100,6 +105,12 @@ var editItem = function(i){
 var deleteItem = function(i) {
     var confirmDelete = confirm('<?php  echo t('Are you sure?') ?>');
     if(confirmDelete == true) {
+		<?php if (version_compare(\Config::get('concrete.version'), '8.0', '>=')) {?>
+		var slideID = $('.editor-content',$(".item[data-order='"+i+"']")).attr('id');
+		if (typeof CKEDITOR === 'object') {
+			CKEDITOR.instances[slideID].destroy();
+		}
+		<?php } ?>
         $(".item[data-order='"+i+"']").remove();
         indexItems();
     }
@@ -131,7 +142,16 @@ $(function(){
     
         //use when using Redactor (wysiwyg)
         var CCM_EDITOR_SECURITY_TOKEN = "<?php  echo Loader::helper('validation/token')->generate('editor')?>";
-        
+
+	<?php
+	if (version_compare(\Config::get('concrete.version'), '8.0', '>=')) {
+	$editorJavascript = Core::make('editor')->outputStandardEditorInitJSFunction();
+	?>
+	var launchEditor = <?= $editorJavascript; ?>;
+	<?php
+		}
+	?>
+
         //Define container and items
         var itemsContainer = $('.items-container');
         var itemTemplate = _.template($('#item-template').html());
@@ -171,6 +191,14 @@ $(function(){
         //Init Index
         indexItems();
 
+	<?php
+		if (version_compare(\Config::get('concrete.version'), '8.0', '>=')) {?>
+			$(function () {  // activate editors
+				if ($('.editor-content-<?php echo $bID; ?>').length) {
+					launchEditor($('.editor-content-<?php echo $bID; ?>'));
+				}
+			});
+	<?php } else { ?>
         //Init Redactor
         $('.redactor-content').redactor({
             minHeight: '200',
@@ -180,6 +208,7 @@ $(function(){
                 lightbox: true
             }
         });
+	<?php } ?>
         
     //CREATE NEW ITEM
         
@@ -200,7 +229,11 @@ $(function(){
             var thisModal = $(this).closest('.ui-dialog-content');
             var newItem = $('.items-container .item').last();
             thisModal.scrollTop(newItem.offset().top);
-            
+
+			<?php
+			if (version_compare(\Config::get('concrete.version'), '8.0', '>=')) {?>
+				launchEditor(newItem.find('.editor-content'));
+				<?php } else { ?>
             //Init Redactor
             newItem.find('.redactor-content').redactor({
                 minHeight: '100',
@@ -210,7 +243,8 @@ $(function(){
                     lightbox: true
                 }
             });
-            
+			<?php } ?>
+
             //Init Index
             indexItems();
         });    

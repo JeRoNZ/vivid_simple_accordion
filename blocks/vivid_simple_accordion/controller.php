@@ -1,6 +1,7 @@
 <?php 
 namespace Concrete\Package\SimpleAccordion\Block\VividSimpleAccordion;
 use \Concrete\Core\Block\BlockController;
+use Concrete\Core\Editor\LinkAbstractor;
 use Loader;
 
 class Controller extends BlockController
@@ -22,12 +23,16 @@ class Controller extends BlockController
 
     public function add()
     {
-        $this->requireAsset('redactor');
+		if (version_compare(\Config::get('concrete.version'), '8.0', '<')) {
+			$this->requireAsset('redactor');
+		}
     }
 
     public function edit()
     {
-        $this->requireAsset('redactor');
+		if (version_compare(\Config::get('concrete.version'), '8.0', '<')) {
+			$this->requireAsset('redactor');
+		}
         $db = Loader::db();
         $items = $db->GetAll('SELECT * from btVividSimpleAccordionItem WHERE bID = ? ORDER BY sortOrder', array($this->bID));
         $this->set('items', $items);
@@ -37,6 +42,11 @@ class Controller extends BlockController
     {
         $db = Loader::db();
         $items = $db->GetAll('SELECT * from btVividSimpleAccordionItem WHERE bID = ? ORDER BY sortOrder', array($this->bID));
+
+		foreach($items as &$i) {
+			$i['description'] = LinkAbstractor::translateFrom($i['description']);
+		}
+
         $this->set('items', $items);
         $this->requireAsset('css', 'font-awesome');
         switch($this->semantic){
@@ -93,11 +103,13 @@ class Controller extends BlockController
         $i = 0;
         parent::save($args);
         while ($i < $count) {
+			$description = LinkAbstractor::translateTo($args['description'][$i]);
+
             $db->execute('INSERT INTO btVividSimpleAccordionItem (bID, title, description, state, sortOrder) values(?,?,?,?,?)',
                 array(
                     $this->bID,
                     $args['title'][$i],
-                    $args['description'][$i],
+                    $description,
                     $args['state'][$i],
                     $args['sortOrder'][$i]
                 )

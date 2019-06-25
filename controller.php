@@ -11,8 +11,8 @@ class Controller extends Package
 
 	protected $pkgHandle = 'simple_accordion';
 	protected $appVersionRequired = '5.7.1';
-	protected $pkgVersion = '1.0.1';
-	
+	// protected $pkgVersion = '1.0.1'; /* Unofficial version, using ckeditor, not redactor in >=5.8 */
+	protected $pkgVersion = '2.0.0';
 	
 	
 	public function getPackageDescription()
